@@ -1,17 +1,16 @@
 package pipe.controllers;
 
-import com.google.common.collect.Sets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JOptionPane;
+import javax.swing.Timer;
+
 import pipe.controllers.application.PipeApplicationController;
 import pipe.historyActions.AnimationHistory;
 import pipe.utilities.gui.GuiUtils;
 import uk.ac.imperial.pipe.models.petrinet.Animator;
 import uk.ac.imperial.pipe.models.petrinet.Transition;
-
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.HashSet;
-import java.util.Set;
 
 
 /**
@@ -68,30 +67,9 @@ public class GUIAnimator {
      * </p>
      */
     public void startAnimation() {
-        saveCurrentTokenState();
-        markEnabledTransitions(new HashSet<Transition>(), animator.getEnabledTransitions());
+    	animator.startAnimation(); 
     }
 
-    /**
-     * Saves the current tokens in places
-     */
-    private void saveCurrentTokenState() {
-        animator.saveState();
-    }
-
-    /**
-     * Computes transitions which need to be disabled because they are no longer enabled and
-     * those that need to be enabled because they have been newly enabled.
-     */
-    private void markEnabledTransitions(Set<Transition> previouslyEnabled, Set<Transition> enabled) {
-        for (Transition transition : Sets.difference(previouslyEnabled, enabled)) {
-            transition.disable();
-        }
-
-        for (Transition transition : Sets.difference(enabled, previouslyEnabled)) {
-            transition.enable();
-        }
-    }
 
     /**
      * Starts a random firing sequence for the specified number of transitions
@@ -146,14 +124,9 @@ public class GUIAnimator {
      * @param transition to be fired 
      */
     public void fireTransition(Transition transition) {
-        Set<Transition> previouslyEnabled = animator.getEnabledTransitions();
         animationHistory.clearStepsForward();
         animationHistory.addHistoryItem(transition);
         animator.fireTransition(transition);
-
-        Set<Transition> enabled = animator.getEnabledTransitions();
-        markEnabledTransitions(previouslyEnabled, enabled);
-
     }
 
     /**
@@ -211,9 +184,6 @@ public class GUIAnimator {
      */
     private void restoreModel() {
         animator.reset();
-        for (Transition transition : animator.getEnabledTransitions()) {
-            transition.disable();
-        }
     }
 
     /**
