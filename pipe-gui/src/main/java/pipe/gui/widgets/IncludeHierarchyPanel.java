@@ -2,16 +2,13 @@ package pipe.gui.widgets;
 
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
@@ -20,7 +17,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
 import pipe.controllers.application.PipeApplicationController;
-import pipe.views.PipeApplicationView;
 import uk.ac.imperial.pipe.models.petrinet.IncludeHierarchy;
 
 @SuppressWarnings("serial")
@@ -35,11 +31,11 @@ public class IncludeHierarchyPanel extends JPanel implements PropertyChangeListe
 	protected JTextField nameTextField = new JTextField("", 20); // force wide text field in layout
 	private JLabel nameLabel;
 	private JLabel uniqueNameLabel;
-	private IncludeHierarchy include;
 	protected JLabel uniqueNameValue;
 	private JLabel fullyQualifiedNameValue;
 	protected JLabel fullyQualifiedNameLabel;
 	private IncludeHierarchyTreePanel treeEditorPanel;
+	private IncludeHierarchy activeInclude;
 
 	
 	/**
@@ -50,8 +46,9 @@ public class IncludeHierarchyPanel extends JPanel implements PropertyChangeListe
 	public IncludeHierarchyPanel(PipeApplicationController controller) {
 		this.controller = controller;
 		controller.addPropertyChangeListener(this); 
-		this.include = controller.getActiveIncludeHierarchy(); 
+		this.activeInclude = controller.getActiveIncludeHierarchy();
 		buildComponents(); 
+		displayActiveInclude();
 	}
 	public IncludeHierarchyPanel(JRootPane rootPane,
 			PipeApplicationController controller) {
@@ -141,14 +138,18 @@ public class IncludeHierarchyPanel extends JPanel implements PropertyChangeListe
         buildIncludeName(editorPanel);
         buildUniqueNameLabel(editorPanel);
         buildFullyQualifiedNameLabel(editorPanel);
-        updateValues(); 
+        displayActiveIncludeValues(); 
 	}
 
-	public void updateValues() {
-		fullyQualifiedNameValue.setText(include.getFullyQualifiedName());
-		uniqueNameValue.setText(include.getUniqueName());
-		nameTextField.setText(include.getName());
+	private void displayActiveIncludeValues() {
+		fullyQualifiedNameValue.setText(activeInclude.getFullyQualifiedName());
+		uniqueNameValue.setText(activeInclude.getUniqueName());
+		nameTextField.setText(activeInclude.getName());
 		
+	}
+	private void displayActiveInclude() {
+		displayActiveIncludeValues(); 
+		treeEditorPanel.select(activeInclude);
 	}
 	private void buildFullyQualifiedNameLabel(JPanel editorPanel) {
 		fullyQualifiedNameLabel = new JLabel();	
@@ -280,9 +281,8 @@ public class IncludeHierarchyPanel extends JPanel implements PropertyChangeListe
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
 		if (event.getPropertyName().equals(PipeApplicationController.NEW_ACTIVE_INCLUDE_HIERARCHY)) {
-			include =  (IncludeHierarchy) event.getNewValue(); 
-			updateValues(); 
-			treeEditorPanel.select(include); 
+			activeInclude =  (IncludeHierarchy) event.getNewValue(); 
+			displayActiveInclude(); 
 		}
 	}
 	protected final IncludeHierarchyTreePanel getTreeEditorPanel() {

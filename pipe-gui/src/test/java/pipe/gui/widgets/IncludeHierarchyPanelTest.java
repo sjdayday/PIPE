@@ -63,5 +63,13 @@ public class IncludeHierarchyPanelTest {
 		assertEquals("2two",includePanel.nameTextField.getText()); 
 		assertEquals("2two",includePanel.getTreeEditorPanel().getTree().getSelectionPath().getLastPathComponent().toString());
 	}
+	@Test
+	public void displaysEntireHierarchyWithSelectedChildIncludeIfChildIsActive() throws IncludeException {
+		when(controller.getActiveIncludeHierarchy()).thenReturn(includes.getInclude("2two")); 
+		includePanel = new IncludeHierarchyPanel(controller);
+		assertEquals("2two",includePanel.nameTextField.getText()); 
+		assertEquals("top",includePanel.getTreeEditorPanel().getTree().getSelectionPath().getPathComponent(0).toString());
+		assertEquals("2two",includePanel.getTreeEditorPanel().getTree().getSelectionPath().getLastPathComponent().toString());
+	}
 	
 }

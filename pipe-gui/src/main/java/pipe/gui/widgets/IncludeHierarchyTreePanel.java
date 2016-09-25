@@ -94,9 +94,10 @@ public class IncludeHierarchyTreePanel extends JPanel implements TreeSelectionLi
 
 	protected void refreshNodes() {
 		nodeMap = new HashMap<IncludeHierarchy, DefaultMutableTreeNode>();
-		rootNode = new DefaultMutableTreeNode(includes);
-		nodeMap.put(includes, rootNode); 
-		IncludeIterator it = includes.iterator();
+		IncludeHierarchy rootInclude = includes.getRoot(); 
+		rootNode = new DefaultMutableTreeNode(rootInclude);
+		nodeMap.put(rootInclude, rootNode); 
+		IncludeIterator it = rootInclude.iterator();
 		IncludeHierarchy include = it.next(); // skip top node
 		DefaultMutableTreeNode parent = null; 
 		DefaultMutableTreeNode child = null; 
