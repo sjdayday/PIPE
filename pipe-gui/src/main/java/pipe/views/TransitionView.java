@@ -55,6 +55,7 @@ public class TransitionView extends ConnectableView<Transition> {
     /**
      * Listen for property changes of the underlying mode and trigger a repaint
      */
+    //TODO test property changes 
     private void setChangeListener() {
         model.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -73,6 +74,8 @@ public class TransitionView extends ConnectableView<Transition> {
                         repaint();
                         break;
                     case Transition.ENABLED_CHANGE_MESSAGE:
+                    	repaint();
+                    	break;
                     case Transition.DISABLED_CHANGE_MESSAGE:
                         repaint();
                         break;
