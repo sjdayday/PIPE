@@ -6,7 +6,6 @@ import pipe.gui.PetriNetTab;
 import pipe.gui.widgets.IncludeHierarchyTreePanel;
 import pipe.historyActions.AnimationHistoryImpl;
 import pipe.views.PipeApplicationView;
-import uk.ac.imperial.pipe.animation.PetriNetAnimator;
 import uk.ac.imperial.pipe.exceptions.IncludeException;
 import uk.ac.imperial.pipe.io.PetriNetFileException;
 import uk.ac.imperial.pipe.models.manager.PetriNetManager;
