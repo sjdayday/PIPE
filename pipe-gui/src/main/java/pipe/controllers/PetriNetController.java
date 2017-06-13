@@ -9,7 +9,7 @@ import uk.ac.imperial.pipe.naming.PlaceNamer;
 import uk.ac.imperial.pipe.naming.TransitionNamer;
 import uk.ac.imperial.pipe.naming.UniqueNamer;
 import uk.ac.imperial.pipe.parsers.FunctionalResults;
-import uk.ac.imperial.pipe.visitor.ClonePetriNet;
+import uk.ac.imperial.pipe.visitor.PetriNetCloner;
 import uk.ac.imperial.pipe.visitor.TranslationVisitor;
 import uk.ac.imperial.pipe.visitor.component.PetriNetComponentVisitor;
 
@@ -126,7 +126,7 @@ public class PetriNetController implements Serializable {
         this.undoListener = undoListener;
         this.petriNetTab = petriNetTab;
         selectionManager = new SelectionManager(this);
-        lastSavedNet = ClonePetriNet.clone(model);
+        lastSavedNet = PetriNetCloner.clone(model);
         this.zoomController = zoomController;
         this.animator = animator;
         this.copyPasteManager = copyPasteManager;
@@ -527,7 +527,7 @@ public class PetriNetController implements Serializable {
      * Take a clone of the Petri net
      */
     public void save() {
-        lastSavedNet = ClonePetriNet.clone(petriNet);
+        lastSavedNet = PetriNetCloner.clone(petriNet);
     }
 
     /**

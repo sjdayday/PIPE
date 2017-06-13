@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.event.UndoableEditListener;
@@ -34,17 +35,25 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import pipe.gui.PetriNetTab;
 import pipe.historyActions.component.DeletePetriNetObject;
+import uk.ac.imperial.pipe.dsl.ANormalArc;
+import uk.ac.imperial.pipe.dsl.APetriNet;
+import uk.ac.imperial.pipe.dsl.APlace;
+import uk.ac.imperial.pipe.dsl.AToken;
+import uk.ac.imperial.pipe.dsl.AnImmediateTransition;
 import uk.ac.imperial.pipe.exceptions.PetriNetComponentException;
 import uk.ac.imperial.pipe.exceptions.PetriNetComponentNotFoundException;
 import uk.ac.imperial.pipe.models.petrinet.ArcPoint;
 import uk.ac.imperial.pipe.models.petrinet.DiscretePlace;
 import uk.ac.imperial.pipe.models.petrinet.DiscreteTransition;
 import uk.ac.imperial.pipe.models.petrinet.InboundArc;
+import uk.ac.imperial.pipe.models.petrinet.InboundNormalArc;
 import uk.ac.imperial.pipe.models.petrinet.PetriNet;
 import uk.ac.imperial.pipe.models.petrinet.PetriNetComponent;
 import uk.ac.imperial.pipe.models.petrinet.Place;
+import uk.ac.imperial.pipe.models.petrinet.PlaceStatusNormal;
 import uk.ac.imperial.pipe.models.petrinet.Token;
 import uk.ac.imperial.pipe.models.petrinet.Transition;
+import uk.ac.imperial.pipe.visitor.PlaceBuilder;
 import uk.ac.imperial.pipe.visitor.TranslationVisitor;
 import uk.ac.imperial.pipe.visitor.component.PetriNetComponentVisitor;
 
@@ -66,11 +75,15 @@ public class PetriNetControllerTest {
     @Mock
     UndoableEditListener undoListener;
 
+	private CopyPasteManager copyPasteManager;
+
+	private ZoomController zoomController;
+
     @Before
     public void setUp() {
         net = new PetriNet();
-        CopyPasteManager copyPasteManager = mock(CopyPasteManager.class);
-        ZoomController zoomController = mock(ZoomController.class);
+        copyPasteManager = mock(CopyPasteManager.class);
+        zoomController = mock(ZoomController.class);
 
         controller = new PetriNetController(net, undoListener, mockAnimator, copyPasteManager, zoomController, mocKTab);
     }
@@ -156,17 +169,18 @@ public class PetriNetControllerTest {
 
     @Test
     public void selectsItemLocatedWithinSelectionArea() {
-        Place place = mock(Place.class);
-        when(place.getX()).thenReturn(5);
-        when(place.getY()).thenReturn(10);
-        when(place.getWidth()).thenReturn(5);
-        when(place.getHeight()).thenReturn(20);
-
+        Place place = new DiscretePlace("P0") {
+        	@Override
+        	public int getWidth() { return 5; }
+        	@Override
+        	public int getHeight() { return 20; }
+        };
+        place.setX(5);
+        place.setY(10);
         net.addPlace(place);
 
         Rectangle selectionRectangle = new Rectangle(5, 10, 40, 40);
         controller.select(selectionRectangle);
-
         assertTrue(controller.isSelected(place));
     }
 
@@ -175,12 +189,14 @@ public class PetriNetControllerTest {
      */
     @Test
     public void selectsItemWithWidthAndHeightWithinSelectionArea() {
-        Place place = mock(Place.class);
-        when(place.getX()).thenReturn(0);
-        when(place.getY()).thenReturn(0);
-        when(place.getWidth()).thenReturn(10);
-        when(place.getHeight()).thenReturn(10);
-
+        Place place = new DiscretePlace("P0") {
+        	@Override
+        	public int getWidth() { return 10; }
+        	@Override
+        	public int getHeight() { return 10; }
+        };
+        place.setX(0);
+        place.setY(0);
         net.addPlace(place);
 
         Rectangle selectionRectangle = new Rectangle(5, 5, 40, 40);
@@ -190,61 +206,59 @@ public class PetriNetControllerTest {
     }
 
     @Test
-    public void selectsArcIfIntersects() {
-        Transition t = new DiscreteTransition("T1", "T1");
-        InboundArc arc = mock(InboundArc.class);
-        when(arc.getTarget()).thenReturn(t);
-        Point2D.Double start = new Point2D.Double(0, 0);
-        Point2D.Double end = new Point2D.Double(10, 10);
-        when(arc.getArcPoints()).thenReturn(Arrays.asList(new ArcPoint(start, false), new ArcPoint(end, false)));
-
-        net.addArc(arc);
-
+    public void selectsArcIfIntersects() throws Exception {
+		InboundNormalArc arc = buildArcFrom0to10();
         Rectangle selectionRectangle = new Rectangle(0, 0, 2, 2);
         controller.select(selectionRectangle);
         assertTrue(controller.isSelected(arc));
     }
-
     @Test
-    public void doesNotSelectArcIfDoesntIntersect() {
-        Transition t = new DiscreteTransition("T1", "T1");
-        InboundArc arc = mock(InboundArc.class);
-        when(arc.getTarget()).thenReturn(t);
-        Point2D.Double start = new Point2D.Double(0, 0);
-        Point2D.Double end = new Point2D.Double(10, 10);
-        when(arc.getArcPoints()).thenReturn(Arrays.asList(new ArcPoint(start, false), new ArcPoint(end, false)));
-
-        net.addArc(arc);
-
+    public void doesNotSelectArcIfDoesntIntersect() throws Exception {
+		InboundNormalArc arc = buildArcFrom0to10();
         Rectangle selectionRectangle = new Rectangle(30, 30, 40, 40);
         controller.select(selectionRectangle);
         assertFalse(controller.isSelected(arc));
     }
+    public InboundNormalArc buildArcFrom0to10() throws PetriNetComponentException, PetriNetComponentNotFoundException {
+    	net = APetriNet.with(AToken.called("Default").withColor(Color.BLACK)).and(APlace.withId("P0")).
+    			andFinally(AnImmediateTransition.withId("T0"));
+    	controller = new PetriNetController(net, undoListener, mockAnimator, copyPasteManager, zoomController, mocKTab);
+    	InboundNormalArc arc = new InboundNormalArc(net.getComponent("P0", Place.class), 
+    			net.getComponent("T0", Transition.class), new HashMap<String, String>()){
+    		@Override
+    		public List<ArcPoint> getArcPoints() {
+    			return Arrays.asList(new ArcPoint(new Point2D.Double(0, 0), false), 
+    					new ArcPoint(new Point2D.Double(10, 10), false));
+    		}
+    	};
+    	
+    	net.addArc(arc);
+    	return arc;
+    }
+    
 
     @Test
     public void translatesSelectedItemsCorrectly() throws PetriNetComponentException {
-        Transition transition = mock(Transition.class);
-        when(transition.isDraggable()).thenReturn(true);
-        Place place = mock(Place.class);
-        when(place.isDraggable()).thenReturn(true);
+    	int x_y_value = 40;
+    	Place place = new DiscretePlace("P0");
+    	Transition transition = new DiscreteTransition("T0");
+        place.setX(x_y_value);
+        place.setY(x_y_value);
+        transition.setX(x_y_value);
+        transition.setY(x_y_value);
         net.addPlace(place);
         net.addTransition(transition);
 
         controller.select(place);
         controller.select(transition);
-
-        int x_y_value = 40;
-        when(place.getX()).thenReturn(x_y_value);
-        when(place.getY()).thenReturn(x_y_value);
-        when(transition.getX()).thenReturn(x_y_value);
-        when(transition.getY()).thenReturn(x_y_value);
-
         int translate_value = 50;
         controller.translateSelected(new Point(translate_value, translate_value));
 
-        double expected_value = x_y_value + translate_value;
-        verify(place).accept(any(TranslationVisitor.class));
-        verify(transition).accept(any(TranslationVisitor.class));
+        int expected_value = x_y_value + translate_value;
+        assertEquals(expected_value, place.getX());
+        assertEquals(expected_value, place.getY());
+        assertEquals(expected_value, transition.getX());
+        assertEquals(expected_value, transition.getY());
     }
 
     @Test
@@ -369,6 +383,10 @@ public class PetriNetControllerTest {
         public void removePropertyChangeListener(PropertyChangeListener listener) {
 
         }
+
+		@Override
+		public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+		}
 
     }
 }
