@@ -113,6 +113,7 @@ public class GUIAnimator {
      */
     public void doRandomFiring() {
         Transition transition = animator.getRandomEnabledTransition();
+        if (transition == null) return; 
         fireTransition(transition);
     }
 

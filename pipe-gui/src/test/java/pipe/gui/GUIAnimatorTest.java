@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -104,6 +105,18 @@ public class GUIAnimatorTest {
         InOrder inOrder = inOrder(mockHistory);
         inOrder.verify(mockHistory, times(1)).clearStepsForward();
         inOrder.verify(mockHistory, times(1)).addHistoryItem(transition);
+    }
+    @Test
+    public void doRandomFiringTakesNoActionIfNoEnabledTransitions()  {
+        animator = new GUIAnimator(mockAnimator, mockHistory, applicationController) {
+        	@Override
+        	public void fireTransition(Transition transition) {
+        		fail("should not be invoked"); 
+        	}
+        };
+    	when(mockAnimator.getRandomEnabledTransition()).thenReturn(null);
+    	animator.doRandomFiring();
+    	verify(mockHistory, times(0)).clearStepsForward();
     }
 
     @Test
